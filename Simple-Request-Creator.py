@@ -22,11 +22,13 @@ c = conn.cursor()
 
 #Some code to generate a random string. Thanks again, StackOverflow!
 #All this is to make this as random as possible, so that a simple filter can't block out the noise.
-def randomPage(size=10, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
-	return ''.join(random.choice(chars for _ in range (size))
+def randomPage(sizeIn=10, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
+	return ''.join(random.choice(chars) for _ in range (sizeIn))
 
-def size(lower=10, upper=30):
+
+def sizeOfURL(lower=10, upper=30):
 	return random.randint(lower, upper)
+
 
 def waitTime(lower=30, upper=180):
 	return random.randint(lower, upper)
@@ -38,19 +40,23 @@ try:
 		#Get a random server, a source, and decide a page to go to (should result in a 404).
 		c.execute('SELECT site FROM sites ORDER BY RANDOM() limit 1')
 		site = c.fetchone()
-		c.execute('SELECT site FROM sites ORDER BY RANDOM() limit 1')
-		source = c.fetchone()
-		page = randomPage(size())
+		size = sizeOfURL()
+		page = randomPage(size)
+		sleepTime = waitTime()
+		
 		#Establish a connection to the random server, saying that you came from another random server
-		connect = http.client.HTTPConnection(data[0], 80, timeout=10, source[0])
+		global connect
+		connect = http.client.HTTPConnection(site[0], 80)
 		#Request the random page that we generated earlier.
 		#Note: This will NOT get any resources from the page, like CSS or images. Just the page (which should be a 404).
-		connect.request("GET", page)
+		connect.request("GET", "/" + page)
+		print("Visited " + site[0])
 		time.sleep(1)
 		#Give the server a second before closing the connection.
 		connect.close()
 		#Sleep for a random time, so that we're not DDOSing (Ehh, with 1,000,000 sites to choose from...).
-		time.sleep(waitTime())
+		print("Sleeping for " + str(sleepTime) + " seconds.")
+		time.sleep(sleepTime)
 
 except KeyboardInterrupt:
 	print("CTRL-C Recieved, Quitting!")
